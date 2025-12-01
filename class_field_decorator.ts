@@ -12,7 +12,7 @@ export function createClassFieldDecorator(
   props: CreateClassFieldDecoratorProps = {},
 ): UniversalClassFieldDecorator {
   return ((...args: unknown[]) => {
-    if (args[0] && typeof args[0] === "object" && typeof args[1] === "string") {
+    if (args[0] && typeof args[1] === "string") {
       return props?.tsExperimental?.call(undefined, ...args);
     }
     if (
