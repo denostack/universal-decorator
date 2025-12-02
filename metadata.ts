@@ -1,6 +1,7 @@
-// deno-lint-ignore-file ban-types
+// deno-lint-ignore-file ban-types no-explicit-any
 
 import { defineDecorator } from "./decorator.ts";
+import type { UniversalDecorator } from "./types.ts";
 
 export interface Property {
   name: string | symbol;
@@ -120,7 +121,7 @@ function defineMetadata<T>(
 export function defineMetadataDecorator<T>(
   key: string | symbol,
   value: T | ((value: T | undefined, storage: Metadata) => T),
-) {
+): UniversalDecorator {
   return defineDecorator({
     ecma(_, ctx) {
       const metadata = getMetadataFromStorage(
@@ -141,14 +142,14 @@ export function defineMetadataDecorator<T>(
   });
 }
 
-export function hasMetadata(metadataKey: string | symbol, target: Function, property?: Property) {
+export function hasMetadata(metadataKey: string | symbol, target: Function, property?: Property): boolean {
   return metadataKey in _getMetadata(target, property);
 }
 
-export function getMetadata(metadataKey: string | symbol, target: Function, property?: Property) {
+export function getMetadata(metadataKey: string | symbol, target: Function, property?: Property): any {
   return _getMetadata(target, property)[metadataKey];
 }
 
-export function getMetadataKeys(target: Function, property?: Property) {
+export function getMetadataKeys(target: Function, property?: Property): (string | symbol)[] {
   return Object.keys(_getMetadata(target, property));
 }
