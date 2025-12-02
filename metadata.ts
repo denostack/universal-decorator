@@ -8,92 +8,144 @@ export interface Property {
 }
 
 const SYMBOL_CLASS = Symbol("class");
-const SYMBOL_INSTANCE_PROPERTIES = Symbol("instanceProperties");
-const SYMBOL_STATIC_PROPERTIES = Symbol("staticProperties");
+const SYMBOL_INSTANCE = Symbol("instance");
+const SYMBOL_STATIC = Symbol("static");
 
-interface MetadataStorageGroup {
-  [SYMBOL_CLASS]?: Record<string | symbol, unknown>;
-  [SYMBOL_INSTANCE_PROPERTIES]?: Record<string | symbol, Record<string | symbol, unknown>>;
-  [SYMBOL_STATIC_PROPERTIES]?: Record<string | symbol, Record<string | symbol, unknown>>;
+type Metadata = Record<string | symbol, unknown>;
+
+interface MetadataStorage {
+  [SYMBOL_CLASS]?: Metadata;
+  [SYMBOL_INSTANCE]?: Record<string | symbol, Metadata>;
+  [SYMBOL_STATIC]?: Record<string | symbol, Metadata>;
 }
 
-const metadataStorageGroupMap = new WeakMap<Function, MetadataStorageGroup>();
+const metadataStorageMap = new WeakMap<Function, MetadataStorage>();
 
-function getOrCreateMetadataStorageGroup(target: Function) {
-  let storageGroup = (target[Symbol.metadata] as MetadataStorageGroup | undefined) ??
-    metadataStorageGroupMap.get(target);
-  if (!storageGroup) {
-    storageGroup = {} as MetadataStorageGroup;
-    metadataStorageGroupMap.set(target, storageGroup);
+function getStorageFromClass(target: Function): MetadataStorage {
+  let storage = metadataStorageMap.get(target);
+  if (!storage) {
+    const parentTarget = Object.getPrototypeOf(target);
+    storage = Object.create(parentTarget ? getStorageFromClass(parentTarget) : null) as MetadataStorage;
+    metadataStorageMap.set(target, storage);
   }
-  return storageGroup;
+  return storage;
 }
 
-function getOrCreateMetadataStorage(storageGroup: MetadataStorageGroup, property?: Property) {
+function getClassMetadataFromStorage(storage: MetadataStorage): Metadata {
+  if (Object.hasOwn(storage, SYMBOL_CLASS)) {
+    return storage[SYMBOL_CLASS]!;
+  }
+  const parentStorage = Object.getPrototypeOf(storage) as MetadataStorage | null;
+  return storage[SYMBOL_CLASS] = Object.create(parentStorage ? getClassMetadataFromStorage(parentStorage) : null);
+}
+
+function getInstanceMetadataGroupFromStorage(storage: MetadataStorage): Record<string | symbol, Metadata> {
+  if (Object.hasOwn(storage, SYMBOL_INSTANCE)) {
+    return storage[SYMBOL_INSTANCE]!;
+  }
+  const parentStorage = Object.getPrototypeOf(storage) as MetadataStorage | null;
+  return storage[SYMBOL_INSTANCE] = Object.create(
+    parentStorage ? getInstanceMetadataGroupFromStorage(parentStorage) : null,
+  );
+}
+
+function getInstanceMetadataFromStorage(storage: MetadataStorage, propertyName: string | symbol): Metadata {
+  const metadataGroup = getInstanceMetadataGroupFromStorage(storage);
+  if (Object.hasOwn(metadataGroup, propertyName)) {
+    return metadataGroup[propertyName]!;
+  }
+  const parentStorage = Object.getPrototypeOf(storage) as MetadataStorage | null;
+  return metadataGroup[propertyName] = Object.create(
+    parentStorage ? getInstanceMetadataFromStorage(parentStorage, propertyName) : null,
+  );
+}
+
+function getStaticMetadataGroupFromStorage(storage: MetadataStorage): Record<string | symbol, Metadata> {
+  if (Object.hasOwn(storage, SYMBOL_STATIC)) {
+    return storage[SYMBOL_STATIC]!;
+  }
+  const parentStorage = Object.getPrototypeOf(storage) as MetadataStorage | null;
+  return storage[SYMBOL_STATIC] = Object.create(
+    parentStorage ? getStaticMetadataGroupFromStorage(parentStorage) : null,
+  );
+}
+
+function getStaticMetadataFromStorage(storage: MetadataStorage, propertyName: string | symbol): Metadata {
+  const metadataGroup = getStaticMetadataGroupFromStorage(storage);
+  if (Object.hasOwn(metadataGroup, propertyName)) {
+    return metadataGroup[propertyName]!;
+  }
+  const parentStorage = Object.getPrototypeOf(storage) as MetadataStorage | null;
+  return metadataGroup[propertyName] = Object.create(
+    parentStorage ? getStaticMetadataFromStorage(parentStorage, propertyName) : null,
+  );
+}
+
+function getMetadataFromStorage(storage: MetadataStorage, property?: Property): Metadata {
   if (!property) {
-    return storageGroup[SYMBOL_CLASS] = storageGroup[SYMBOL_CLASS] ?? {};
+    return getClassMetadataFromStorage(storage);
   }
-  if (property.static) {
-    storageGroup[SYMBOL_STATIC_PROPERTIES] = storageGroup[SYMBOL_STATIC_PROPERTIES] ?? {};
-    return storageGroup[SYMBOL_STATIC_PROPERTIES][property.name] =
-      storageGroup[SYMBOL_STATIC_PROPERTIES][property.name] ?? {};
+  return property.static
+    ? getStaticMetadataFromStorage(storage, property.name)
+    : getInstanceMetadataFromStorage(storage, property.name);
+}
+
+function _getReadableMetadata(storage: MetadataStorage, property?: Property): Metadata {
+  if (!property) {
+    return storage[SYMBOL_CLASS] ?? {};
   }
-  storageGroup[SYMBOL_INSTANCE_PROPERTIES] = storageGroup[SYMBOL_INSTANCE_PROPERTIES] ?? {};
-  return storageGroup[SYMBOL_INSTANCE_PROPERTIES][property.name] =
-    storageGroup[SYMBOL_INSTANCE_PROPERTIES][property.name] ?? {};
+  return storage[property.static ? SYMBOL_STATIC : SYMBOL_INSTANCE]?.[property.name] ?? {};
+}
+
+function _getMetadata(target: Function, property?: Property): Metadata {
+  return _getReadableMetadata(
+    (target[Symbol.metadata] as MetadataStorage | undefined) ?? metadataStorageMap.get(target) ?? {},
+    property,
+  );
 }
 
 function defineMetadata<T>(
-  metadataStorage: Record<string | symbol, unknown>,
+  metadata: Metadata,
   metadataKey: string | symbol,
   metadataValue: T | ((value?: T) => T),
 ) {
-  metadataStorage[metadataKey] = typeof metadataValue === "function"
-    ? (metadataValue as (value?: T) => T)(metadataStorage[metadataKey] as T | undefined)
+  metadata[metadataKey] = typeof metadataValue === "function"
+    ? (metadataValue as (value?: T) => T)(metadata[metadataKey] as T | undefined)
     : metadataValue;
 }
 
 export function defineMetadataDecorator<T>(
   key: string | symbol,
-  value: T | ((value?: T) => T),
+  value: T | ((value?: T, storage?: Metadata) => T),
 ) {
   return defineDecorator({
     ecma(_, ctx) {
-      const storage = getOrCreateMetadataStorage(
-        ctx.metadata as MetadataStorageGroup,
+      const metadata = getMetadataFromStorage(
+        ctx.metadata,
         ctx.kind === "class" ? undefined : { name: ctx.name, static: ctx.static },
       );
-      defineMetadata(storage, key, value);
+      defineMetadata(metadata, key, value);
     },
     tsExperimental(target, property) {
       const [targetClass, isStatic] = typeof target === "function" ? [target, true] : [target.constructor, false];
-      const storageGroup = getOrCreateMetadataStorageGroup(targetClass);
-      const storage = getOrCreateMetadataStorage(
-        storageGroup,
+      const storage = getStorageFromClass(targetClass);
+      const metadata = getMetadataFromStorage(
+        storage,
         property ? { name: property, static: isStatic } : undefined,
       );
-      defineMetadata(storage, key, value);
+      defineMetadata(metadata, key, value);
     },
   });
 }
 
-function getOwnMetadataStorage(target: Function, property?: Property) {
-  const storageGroup = (target[Symbol.metadata] as MetadataStorageGroup | undefined) ??
-    metadataStorageGroupMap.get(target) ?? {};
-  if (!property) {
-    return storageGroup[SYMBOL_CLASS] ?? {};
-  }
-  return storageGroup[property.static ? SYMBOL_STATIC_PROPERTIES : SYMBOL_INSTANCE_PROPERTIES]?.[property.name] ?? {};
-}
-
-export function hasOwnMetadata(metadataKey: string | symbol, target: Function, property?: Property) {
-  return metadataKey in getOwnMetadataStorage(target, property);
+export function hasMetadata(metadataKey: string | symbol, target: Function, property?: Property) {
+  return metadataKey in _getMetadata(target, property);
 }
 
 export function getMetadata(metadataKey: string | symbol, target: Function, property?: Property) {
-  return getOwnMetadataStorage(target, property)[metadataKey];
+  return _getMetadata(target, property)[metadataKey];
 }
 
 export function getMetadataKeys(target: Function, property?: Property) {
-  return Object.keys(getOwnMetadataStorage(target, property));
+  return Object.keys(_getMetadata(target, property));
 }
