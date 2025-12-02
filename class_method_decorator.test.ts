@@ -19,12 +19,12 @@ Deno.test("createClassMethodDecorator with typescript experimental decorator", (
   assertEquals(spyTsExperimental.length, 0);
 
   class TestClass {
-    bar() {}
+    instanceMethod() {}
   }
-  classMethodDecorator.call(undefined, TestClass.prototype, "bar", {
+  classMethodDecorator.call(undefined, TestClass.prototype, "instanceMethod", {
     configurable: true,
     enumerable: false,
-    value: TestClass.prototype.bar,
+    value: TestClass.prototype.instanceMethod,
     writable: true,
   });
 
@@ -32,11 +32,11 @@ Deno.test("createClassMethodDecorator with typescript experimental decorator", (
   assertEquals(spyTsExperimental.length, 1);
   assertEquals(spyTsExperimental[0].length, 3);
   assertStrictEquals(spyTsExperimental[0][0], TestClass.prototype);
-  assertStrictEquals(spyTsExperimental[0][1], "bar");
+  assertStrictEquals(spyTsExperimental[0][1], "instanceMethod");
   assertEquals(spyTsExperimental[0][2], {
     configurable: true,
     enumerable: false,
-    value: TestClass.prototype.bar,
+    value: TestClass.prototype.instanceMethod,
     writable: true,
   });
 });
@@ -59,15 +59,15 @@ Deno.test("createClassMethodDecorator with ecma decorator", () => {
 
   class TestClass {
     @classMethodDecorator
-    bar() {}
+    instanceMethod() {}
   }
 
   assertEquals(spyEcma.length, 1);
   assertEquals(spyEcma[0].length, 2);
-  assertStrictEquals(spyEcma[0][0], TestClass.prototype.bar);
+  assertStrictEquals(spyEcma[0][0], TestClass.prototype.instanceMethod);
   expect(spyEcma[0][1]).toEqual({
     kind: "method",
-    name: "bar",
+    name: "instanceMethod",
     static: false,
     private: false,
     metadata: Object.create(null),
@@ -95,12 +95,12 @@ Deno.test("createClassMethodDecorator static with typescript experimental decora
   assertEquals(spyTsExperimental.length, 0);
 
   class TestClass {
-    static bar() {}
+    static staticMethod() {}
   }
-  classMethodDecorator.call(undefined, TestClass, "bar", {
+  classMethodDecorator.call(undefined, TestClass, "staticMethod", {
     configurable: true,
     enumerable: false,
-    value: TestClass.bar,
+    value: TestClass.staticMethod,
     writable: true,
   });
 
@@ -108,11 +108,11 @@ Deno.test("createClassMethodDecorator static with typescript experimental decora
   assertEquals(spyTsExperimental.length, 1);
   assertEquals(spyTsExperimental[0].length, 3);
   assertStrictEquals(spyTsExperimental[0][0], TestClass);
-  assertStrictEquals(spyTsExperimental[0][1], "bar");
+  assertStrictEquals(spyTsExperimental[0][1], "staticMethod");
   assertEquals(spyTsExperimental[0][2], {
     configurable: true,
     enumerable: false,
-    value: TestClass.bar,
+    value: TestClass.staticMethod,
     writable: true,
   });
 });
@@ -135,15 +135,15 @@ Deno.test("createClassMethodDecorator static with ecma decorator", () => {
 
   class TestClass {
     @classMethodDecorator
-    static bar() {}
+    static staticMethod() {}
   }
 
   assertEquals(spyEcma.length, 1);
   assertEquals(spyEcma[0].length, 2);
-  assertStrictEquals(spyEcma[0][0], TestClass.bar);
+  assertStrictEquals(spyEcma[0][0], TestClass.staticMethod);
   expect(spyEcma[0][1]).toEqual({
     kind: "method",
-    name: "bar",
+    name: "staticMethod",
     static: true,
     private: false,
     metadata: Object.create(null),

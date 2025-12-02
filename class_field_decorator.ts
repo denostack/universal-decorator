@@ -1,3 +1,5 @@
+// deno-lint-ignore-file no-explicit-any
+
 import type {
   ProposalClassFieldDecorator,
   UniversalClassFieldDecorator,
@@ -13,7 +15,7 @@ export function createClassFieldDecorator(
 ): UniversalClassFieldDecorator {
   return ((...args: unknown[]) => {
     if (args[0] && typeof args[1] === "string") {
-      return props?.tsExperimental?.call(undefined, ...args);
+      return props?.tsExperimental?.apply(undefined, args as any);
     }
     if (
       !args[0] &&
@@ -21,7 +23,7 @@ export function createClassFieldDecorator(
       typeof args[1] === "object" &&
       "addInitializer" in args[1]
     ) {
-      return props?.ecma?.call(undefined, ...args);
+      return props?.ecma?.apply(undefined, args as any);
     }
   }) as unknown as UniversalClassFieldDecorator;
 }

@@ -1,3 +1,5 @@
+// deno-lint-ignore-file no-explicit-any
+
 import type {
   ProposalClassDecorator,
   UniversalClassDecorator,
@@ -13,7 +15,7 @@ export function createClassDecorator(
 ): UniversalClassDecorator {
   return ((...args: unknown[]) => {
     if (args[0] && typeof args[0] === "function" && !args[1]) {
-      return props.tsExperimental?.apply(undefined, args);
+      return props.tsExperimental?.apply(undefined, args as any);
     }
     if (
       args[0] && typeof args[0] === "function" &&
@@ -21,7 +23,7 @@ export function createClassDecorator(
       typeof args[1] === "object" &&
       "addInitializer" in args[1]
     ) {
-      return props.ecma?.apply(undefined, args);
+      return props.ecma?.apply(undefined, args as any);
     }
   }) as unknown as UniversalClassDecorator;
 }

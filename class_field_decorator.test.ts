@@ -1,3 +1,5 @@
+// deno-lint-ignore-file no-explicit-any
+
 import { assertEquals, assertStrictEquals } from "@std/assert";
 import { expect } from "@std/expect";
 import { createClassFieldDecorator } from "./class_field_decorator.ts";
@@ -19,15 +21,20 @@ Deno.test("createClassFieldDecorator with typescript experimental decorator", ()
   assertEquals(spyTsExperimental.length, 0);
 
   class TestClass {
-    foo: string;
+    instanceField?: string;
   }
-  classFieldDecorator.call(undefined, TestClass.prototype, "foo", undefined);
+  (classFieldDecorator as any).call(
+    undefined,
+    TestClass.prototype,
+    "instanceField",
+    undefined,
+  );
 
   assertEquals(spyEcma.length, 0);
   assertEquals(spyTsExperimental.length, 1);
   assertEquals(spyTsExperimental[0].length, 3);
   assertStrictEquals(spyTsExperimental[0][0], TestClass.prototype);
-  assertStrictEquals(spyTsExperimental[0][1], "foo");
+  assertStrictEquals(spyTsExperimental[0][1], "instanceField");
   assertStrictEquals(spyTsExperimental[0][2], undefined);
 });
 
@@ -49,7 +56,7 @@ Deno.test("createClassFieldDecorator with ecma decorator", () => {
 
   class _TestClass {
     @classFieldDecorator
-    foo: string;
+    instanceField?: string;
   }
 
   assertEquals(spyEcma.length, 1);
@@ -57,7 +64,7 @@ Deno.test("createClassFieldDecorator with ecma decorator", () => {
   assertStrictEquals(spyEcma[0][0], undefined);
   expect(spyEcma[0][1]).toEqual({
     kind: "field",
-    name: "foo",
+    name: "instanceField",
     static: false,
     private: false,
     metadata: Object.create(null),
@@ -85,15 +92,20 @@ Deno.test("createClassFieldDecorator static with typescript experimental decorat
   assertEquals(spyTsExperimental.length, 0);
 
   class TestClass {
-    static foo: string;
+    static staticField: string;
   }
-  classFieldDecorator.call(undefined, TestClass, "foo", undefined);
+  (classFieldDecorator as any).call(
+    undefined,
+    TestClass,
+    "staticField",
+    undefined,
+  );
 
   assertEquals(spyEcma.length, 0);
   assertEquals(spyTsExperimental.length, 1);
   assertEquals(spyTsExperimental[0].length, 3);
   assertStrictEquals(spyTsExperimental[0][0], TestClass);
-  assertStrictEquals(spyTsExperimental[0][1], "foo");
+  assertStrictEquals(spyTsExperimental[0][1], "staticField");
   assertStrictEquals(spyTsExperimental[0][2], undefined);
 });
 
@@ -115,7 +127,7 @@ Deno.test("createClassFieldDecorator static with ecma decorator", () => {
 
   class _TestClass {
     @classFieldDecorator
-    static foo: string;
+    static staticField: string;
   }
 
   assertEquals(spyEcma.length, 1);
@@ -123,7 +135,7 @@ Deno.test("createClassFieldDecorator static with ecma decorator", () => {
   assertStrictEquals(spyEcma[0][0], undefined);
   expect(spyEcma[0][1]).toEqual({
     kind: "field",
-    name: "foo",
+    name: "staticField",
     static: true,
     private: false,
     metadata: Object.create(null),

@@ -19,7 +19,6 @@ Deno.test("createClassDecorator with typescript experimental decorator", () => {
   assertEquals(spyTsExperimental.length, 0);
 
   class TestClass {
-    foo: string;
   }
   classDecorator.call(undefined, TestClass);
 
@@ -48,7 +47,6 @@ Deno.test("createClassDecorator with ecma decorator", () => {
 
   @classDecorator
   class TestClass {
-    foo: string;
   }
 
   assertEquals(spyEcma.length, 1);

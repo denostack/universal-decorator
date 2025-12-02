@@ -1,9 +1,9 @@
-// deno-lint-ignore-file ban-types
+// deno-lint-ignore-file ban-types no-explicit-any
 
 export type ProposalClassDecorator = <TFunction extends Function>(
   target: TFunction,
   ctx: ClassDecoratorContext,
-) => void;
+) => any;
 export type UniversalClassDecorator =
   & ProposalClassDecorator
   & ClassDecorator;
@@ -11,7 +11,15 @@ export type UniversalClassDecorator =
 export type ProposalClassFieldDecorator = (
   _: undefined,
   ctx: ClassFieldDecoratorContext,
-) => void;
+) => any;
 export type UniversalClassFieldDecorator =
   & ProposalClassFieldDecorator
   & PropertyDecorator;
+
+export type ProposalClassMethodDecorator = (
+  target: Function,
+  ctx: ClassMethodDecoratorContext,
+) => any;
+export type UniversalClassMethodDecorator =
+  & ProposalClassMethodDecorator
+  & MethodDecorator;
