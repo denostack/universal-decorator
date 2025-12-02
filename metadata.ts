@@ -107,16 +107,19 @@ function _getMetadata(target: Function, property?: Property): Metadata {
 function defineMetadata<T>(
   metadata: Metadata,
   metadataKey: string | symbol,
-  metadataValue: T | ((value?: T) => T),
+  metadataValue: T | ((value: T | undefined, storage: Metadata) => T),
 ) {
   metadata[metadataKey] = typeof metadataValue === "function"
-    ? (metadataValue as (value?: T) => T)(metadata[metadataKey] as T | undefined)
+    ? (metadataValue as (value: T | undefined, storage: Metadata) => T)(
+      metadata[metadataKey] as T | undefined,
+      metadata,
+    )
     : metadataValue;
 }
 
 export function defineMetadataDecorator<T>(
   key: string | symbol,
-  value: T | ((value?: T, storage?: Metadata) => T),
+  value: T | ((value: T | undefined, storage: Metadata) => T),
 ) {
   return defineDecorator({
     ecma(_, ctx) {
