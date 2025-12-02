@@ -91,18 +91,12 @@ function getMetadataFromStorage(storage: MetadataStorage, property?: Property): 
     : getInstanceMetadataFromStorage(storage, property.name);
 }
 
-function _getReadableMetadata(storage: MetadataStorage, property?: Property): Metadata {
+function getMetadataTarget(target: Function, property?: Property): Metadata {
+  const storage = (target[Symbol.metadata] as MetadataStorage | undefined) ?? metadataStorageMap.get(target) ?? {};
   if (!property) {
     return storage[SYMBOL_CLASS] ?? {};
   }
   return storage[property.static ? SYMBOL_STATIC : SYMBOL_INSTANCE]?.[property.name] ?? {};
-}
-
-function _getMetadata(target: Function, property?: Property): Metadata {
-  return _getReadableMetadata(
-    (target[Symbol.metadata] as MetadataStorage | undefined) ?? metadataStorageMap.get(target) ?? {},
-    property,
-  );
 }
 
 function defineMetadata<T>(
@@ -143,13 +137,17 @@ export function defineMetadataDecorator<T>(
 }
 
 export function hasMetadata(metadataKey: string | symbol, target: Function, property?: Property): boolean {
-  return metadataKey in _getMetadata(target, property);
+  return metadataKey in getMetadataTarget(target, property);
 }
 
 export function getMetadata(metadataKey: string | symbol, target: Function, property?: Property): any {
-  return _getMetadata(target, property)[metadataKey];
+  return getMetadataTarget(target, property)[metadataKey];
 }
 
 export function getMetadataKeys(target: Function, property?: Property): (string | symbol)[] {
-  return Object.keys(_getMetadata(target, property));
+  const keys: (string | symbol)[] = [];
+  for (const key in getMetadataTarget(target, property)) {
+    keys.push(key);
+  }
+  return keys;
 }
