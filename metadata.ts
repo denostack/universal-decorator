@@ -1,6 +1,6 @@
 // deno-lint-ignore-file ban-types
 
-import { defineDecorator } from "./define_decorator.ts";
+import { defineDecorator } from "./decorator.ts";
 
 export interface Property {
   name: string | symbol;

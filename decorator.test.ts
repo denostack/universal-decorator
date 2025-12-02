@@ -1,6 +1,6 @@
 import { assertEquals, assertStrictEquals } from "@std/assert";
 import { expect } from "@std/expect";
-import { defineDecorator } from "./define_decorator.ts";
+import { defineDecorator } from "./decorator.ts";
 
 Deno.test("defineDecorator, class with typescript experimental decorator", () => {
   const spyEcma = [] as unknown[][];
