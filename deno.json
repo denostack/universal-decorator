@@ -23,7 +23,8 @@
     "exclude": [".npm"]
   },
   "fmt": {
-    "exclude": [".npm"]
+    "exclude": [".npm"],
+    "lineWidth": 120
   },
   "publish": {
     "exclude": [
