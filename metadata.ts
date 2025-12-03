@@ -91,7 +91,7 @@ function getMetadataFromStorage(storage: MetadataStorage, property?: Property): 
     : getInstanceMetadataFromStorage(storage, property.name);
 }
 
-function getMetadataTarget(target: Function, property?: Property): Metadata {
+function getMetadataFromTarget(target: Function, property?: Property): Metadata {
   const storage = (target[Symbol.metadata] as MetadataStorage | undefined) ?? metadataStorageMap.get(target) ?? {};
   if (!property) {
     return storage[SYMBOL_CLASS] ?? {};
@@ -137,17 +137,33 @@ export function defineMetadataDecorator<T>(
 }
 
 export function hasMetadata(metadataKey: string | symbol, target: Function, property?: Property): boolean {
-  return metadataKey in getMetadataTarget(target, property);
+  return metadataKey in getMetadataFromTarget(target, property);
 }
 
 export function getMetadata(metadataKey: string | symbol, target: Function, property?: Property): any {
-  return getMetadataTarget(target, property)[metadataKey];
+  return getMetadataFromTarget(target, property)[metadataKey];
 }
 
 export function getMetadataKeys(target: Function, property?: Property): (string | symbol)[] {
   const keys: (string | symbol)[] = [];
-  for (const key in getMetadataTarget(target, property)) {
+  for (const key in getMetadataFromTarget(target, property)) {
     keys.push(key);
   }
   return keys;
+}
+
+export function hasOwnMetadata(metadataKey: string | symbol, target: Function, property?: Property): boolean {
+  return Object.hasOwn(getMetadataFromTarget(target, property), metadataKey);
+}
+
+export function getOwnMetadata(metadataKey: string | symbol, target: Function, property?: Property): any {
+  const metadata = getMetadataFromTarget(target, property);
+  if (Object.hasOwn(metadata, metadataKey)) {
+    return metadata[metadataKey];
+  }
+  return undefined;
+}
+
+export function getOwnMetadataKeys(target: Function, property?: Property): (string | symbol)[] {
+  return Object.keys(getMetadataFromTarget(target, property));
 }

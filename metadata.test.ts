@@ -1,5 +1,13 @@
 import { assertEquals } from "@std/assert/equals";
-import { defineMetadataDecorator, getMetadata, getMetadataKeys, hasMetadata } from "./metadata.ts";
+import {
+  defineMetadataDecorator,
+  getMetadata,
+  getMetadataKeys,
+  getOwnMetadata,
+  getOwnMetadataKeys,
+  hasMetadata,
+  hasOwnMetadata,
+} from "./metadata.ts";
 
 Deno.test("defineMetadataDecorator with typescript experimental decorator", () => {
   class TestClass {
@@ -202,6 +210,40 @@ Deno.test("defineMetadataDecorator, inherit with typescript experimental decorat
     "instanceMethod1",
   ]);
 
+  // getOwnMetadataKeys
+  assertEquals(getOwnMetadataKeys(TestClass1), ["class", "class1"]);
+  assertEquals(getOwnMetadataKeys(TestClass1, { static: false, name: "instanceField" }), [
+    "instanceField",
+    "instanceField1",
+  ]);
+  assertEquals(getOwnMetadataKeys(TestClass1, { static: true, name: "staticField" }), ["staticField", "staticField1"]);
+  assertEquals(getOwnMetadataKeys(TestClass1, { static: true, name: "staticMethod" }), [
+    "staticMethod",
+    "staticMethod1",
+  ]);
+  assertEquals(getOwnMetadataKeys(TestClass1, { static: false, name: "instanceMethod" }), [
+    "instanceMethod",
+    "instanceMethod1",
+  ]);
+
+  assertEquals(getOwnMetadataKeys(TestClass2), ["class", "class2"]);
+  assertEquals(getOwnMetadataKeys(TestClass2, { static: false, name: "instanceField" }), [
+    "instanceField",
+    "instanceField2",
+  ]);
+  assertEquals(getOwnMetadataKeys(TestClass2, { static: true, name: "staticField" }), [
+    "staticField",
+    "staticField2",
+  ]);
+  assertEquals(getOwnMetadataKeys(TestClass2, { static: true, name: "staticMethod" }), [
+    "staticMethod",
+    "staticMethod2",
+  ]);
+  assertEquals(getOwnMetadataKeys(TestClass2, { static: false, name: "instanceMethod" }), [
+    "instanceMethod",
+    "instanceMethod2",
+  ]);
+
   // hasMetadata
   assertEquals(hasMetadata("class", TestClass1), true);
   assertEquals(hasMetadata("class1", TestClass1), true);
@@ -210,6 +252,15 @@ Deno.test("defineMetadataDecorator, inherit with typescript experimental decorat
   assertEquals(hasMetadata("class", TestClass2), true);
   assertEquals(hasMetadata("class1", TestClass2), true);
   assertEquals(hasMetadata("class2", TestClass2), true);
+
+  // hasOwnMetadata
+  assertEquals(hasOwnMetadata("class", TestClass1), true);
+  assertEquals(hasOwnMetadata("class1", TestClass1), true);
+  assertEquals(hasOwnMetadata("class2", TestClass1), false);
+
+  assertEquals(hasOwnMetadata("class", TestClass2), true);
+  assertEquals(hasOwnMetadata("class1", TestClass2), false);
+  assertEquals(hasOwnMetadata("class2", TestClass2), true);
 
   // getMetadata
   assertEquals(getMetadata("class", TestClass1), { name: "TestClass1" });
@@ -300,6 +351,88 @@ Deno.test("defineMetadataDecorator, inherit with typescript experimental decorat
   assertEquals(getMetadata("instanceMethod2", TestClass2, { static: false, name: "instanceMethod" }), {
     name: "Test2 instance method only",
   });
+
+  // getOwnMetadata
+  assertEquals(getOwnMetadata("class", TestClass1), { name: "TestClass1" });
+  assertEquals(getOwnMetadata("class", TestClass2), { name: "TestClass1", extended: true });
+
+  assertEquals(getOwnMetadata("class1", TestClass1), { name: "TestClass1 only" });
+  assertEquals(getOwnMetadata("class1", TestClass2), undefined);
+
+  assertEquals(getOwnMetadata("class2", TestClass1), undefined);
+  assertEquals(getOwnMetadata("class2", TestClass2), { name: "TestClass2 only" });
+
+  assertEquals(getOwnMetadata("staticField", TestClass1, { static: true, name: "staticField" }), {
+    name: "Test1 static field",
+  });
+  assertEquals(getOwnMetadata("staticField", TestClass2, { static: true, name: "staticField" }), {
+    name: "Test1 static field",
+    extended: true,
+  });
+
+  assertEquals(getOwnMetadata("staticField1", TestClass1, { static: true, name: "staticField" }), {
+    name: "Test1 static field only",
+  });
+  assertEquals(getOwnMetadata("staticField1", TestClass2, { static: true, name: "staticField" }), undefined);
+
+  assertEquals(getOwnMetadata("staticField2", TestClass1, { static: true, name: "staticField" }), undefined);
+  assertEquals(getOwnMetadata("staticField2", TestClass2, { static: true, name: "staticField" }), {
+    name: "Test2 static field only",
+  });
+
+  assertEquals(getOwnMetadata("staticMethod", TestClass1, { static: true, name: "staticMethod" }), {
+    name: "Test1 static method",
+  });
+  assertEquals(getOwnMetadata("staticMethod", TestClass2, { static: true, name: "staticMethod" }), {
+    name: "Test1 static method",
+    extended: true,
+  });
+
+  assertEquals(getOwnMetadata("staticMethod1", TestClass1, { static: true, name: "staticMethod" }), {
+    name: "Test1 static method only",
+  });
+  assertEquals(getOwnMetadata("staticMethod1", TestClass2, { static: true, name: "staticMethod" }), undefined);
+
+  assertEquals(getOwnMetadata("staticMethod2", TestClass1, { static: true, name: "staticMethod" }), undefined);
+  assertEquals(getOwnMetadata("staticMethod2", TestClass2, { static: true, name: "staticMethod" }), {
+    name: "Test2 static method only",
+  });
+
+  assertEquals(getOwnMetadata("instanceField", TestClass1, { static: false, name: "instanceField" }), {
+    name: "Test1 instance field",
+  });
+  assertEquals(getOwnMetadata("instanceField", TestClass2, { static: false, name: "instanceField" }), {
+    name: "Test1 instance field",
+    extended: true,
+  });
+
+  assertEquals(getOwnMetadata("instanceField1", TestClass1, { static: false, name: "instanceField" }), {
+    name: "Test1 instance field only",
+  });
+  assertEquals(getOwnMetadata("instanceField1", TestClass2, { static: false, name: "instanceField" }), undefined);
+
+  assertEquals(getOwnMetadata("instanceField2", TestClass1, { static: false, name: "instanceField" }), undefined);
+  assertEquals(getOwnMetadata("instanceField2", TestClass2, { static: false, name: "instanceField" }), {
+    name: "Test2 instance field only",
+  });
+
+  assertEquals(getOwnMetadata("instanceMethod", TestClass1, { static: false, name: "instanceMethod" }), {
+    name: "Test1 instance method",
+  });
+  assertEquals(getOwnMetadata("instanceMethod", TestClass2, { static: false, name: "instanceMethod" }), {
+    name: "Test1 instance method",
+    extended: true,
+  });
+
+  assertEquals(getOwnMetadata("instanceMethod1", TestClass1, { static: false, name: "instanceMethod" }), {
+    name: "Test1 instance method only",
+  });
+  assertEquals(getOwnMetadata("instanceMethod1", TestClass2, { static: false, name: "instanceMethod" }), undefined);
+
+  assertEquals(getOwnMetadata("instanceMethod2", TestClass1, { static: false, name: "instanceMethod" }), undefined);
+  assertEquals(getOwnMetadata("instanceMethod2", TestClass2, { static: false, name: "instanceMethod" }), {
+    name: "Test2 instance method only",
+  });
 });
 
 Deno.test("defineMetadataDecorator, inherit with ecma decorator", () => {
@@ -372,6 +505,40 @@ Deno.test("defineMetadataDecorator, inherit with ecma decorator", () => {
     "instanceMethod1",
   ]);
 
+  // getOwnMetadataKeys
+  assertEquals(getOwnMetadataKeys(TestClass1), ["class1", "class"]);
+  assertEquals(getOwnMetadataKeys(TestClass1, { static: false, name: "instanceField" }), [
+    "instanceField1",
+    "instanceField",
+  ]);
+  assertEquals(getOwnMetadataKeys(TestClass1, { static: true, name: "staticField" }), ["staticField1", "staticField"]);
+  assertEquals(getOwnMetadataKeys(TestClass1, { static: true, name: "staticMethod" }), [
+    "staticMethod1",
+    "staticMethod",
+  ]);
+  assertEquals(getOwnMetadataKeys(TestClass1, { static: false, name: "instanceMethod" }), [
+    "instanceMethod1",
+    "instanceMethod",
+  ]);
+
+  assertEquals(getOwnMetadataKeys(TestClass2), ["class2", "class"]);
+  assertEquals(getOwnMetadataKeys(TestClass2, { static: false, name: "instanceField" }), [
+    "instanceField2",
+    "instanceField",
+  ]);
+  assertEquals(getOwnMetadataKeys(TestClass2, { static: true, name: "staticField" }), [
+    "staticField2",
+    "staticField",
+  ]);
+  assertEquals(getOwnMetadataKeys(TestClass2, { static: true, name: "staticMethod" }), [
+    "staticMethod2",
+    "staticMethod",
+  ]);
+  assertEquals(getOwnMetadataKeys(TestClass2, { static: false, name: "instanceMethod" }), [
+    "instanceMethod2",
+    "instanceMethod",
+  ]);
+
   // hasMetadata
   assertEquals(hasMetadata("class", TestClass1), true);
   assertEquals(hasMetadata("class1", TestClass1), true);
@@ -380,6 +547,15 @@ Deno.test("defineMetadataDecorator, inherit with ecma decorator", () => {
   assertEquals(hasMetadata("class", TestClass2), true);
   assertEquals(hasMetadata("class1", TestClass2), true);
   assertEquals(hasMetadata("class2", TestClass2), true);
+
+  // hasOwnMetadata
+  assertEquals(hasOwnMetadata("class", TestClass1), true);
+  assertEquals(hasOwnMetadata("class1", TestClass1), true);
+  assertEquals(hasOwnMetadata("class2", TestClass1), false);
+
+  assertEquals(hasOwnMetadata("class", TestClass2), true);
+  assertEquals(hasOwnMetadata("class1", TestClass2), false);
+  assertEquals(hasOwnMetadata("class2", TestClass2), true);
 
   // getMetadata
   assertEquals(getMetadata("class", TestClass1), { name: "TestClass1" });
@@ -468,6 +644,88 @@ Deno.test("defineMetadataDecorator, inherit with ecma decorator", () => {
 
   assertEquals(getMetadata("instanceMethod2", TestClass1, { static: false, name: "instanceMethod" }), undefined);
   assertEquals(getMetadata("instanceMethod2", TestClass2, { static: false, name: "instanceMethod" }), {
+    name: "Test2 instance method only",
+  });
+
+  // getOwnMetadata
+  assertEquals(getOwnMetadata("class", TestClass1), { name: "TestClass1" });
+  assertEquals(getOwnMetadata("class", TestClass2), { name: "TestClass1", extended: true });
+
+  assertEquals(getOwnMetadata("class1", TestClass1), { name: "TestClass1 only" });
+  assertEquals(getOwnMetadata("class1", TestClass2), undefined);
+
+  assertEquals(getOwnMetadata("class2", TestClass1), undefined);
+  assertEquals(getOwnMetadata("class2", TestClass2), { name: "TestClass2 only" });
+
+  assertEquals(getOwnMetadata("staticField", TestClass1, { static: true, name: "staticField" }), {
+    name: "Test1 static field",
+  });
+  assertEquals(getOwnMetadata("staticField", TestClass2, { static: true, name: "staticField" }), {
+    name: "Test1 static field",
+    extended: true,
+  });
+
+  assertEquals(getOwnMetadata("staticField1", TestClass1, { static: true, name: "staticField" }), {
+    name: "Test1 static field only",
+  });
+  assertEquals(getOwnMetadata("staticField1", TestClass2, { static: true, name: "staticField" }), undefined);
+
+  assertEquals(getOwnMetadata("staticField2", TestClass1, { static: true, name: "staticField" }), undefined);
+  assertEquals(getOwnMetadata("staticField2", TestClass2, { static: true, name: "staticField" }), {
+    name: "Test2 static field only",
+  });
+
+  assertEquals(getOwnMetadata("staticMethod", TestClass1, { static: true, name: "staticMethod" }), {
+    name: "Test1 static method",
+  });
+  assertEquals(getOwnMetadata("staticMethod", TestClass2, { static: true, name: "staticMethod" }), {
+    name: "Test1 static method",
+    extended: true,
+  });
+
+  assertEquals(getOwnMetadata("staticMethod1", TestClass1, { static: true, name: "staticMethod" }), {
+    name: "Test1 static method only",
+  });
+  assertEquals(getOwnMetadata("staticMethod1", TestClass2, { static: true, name: "staticMethod" }), undefined);
+
+  assertEquals(getOwnMetadata("staticMethod2", TestClass1, { static: true, name: "staticMethod" }), undefined);
+  assertEquals(getOwnMetadata("staticMethod2", TestClass2, { static: true, name: "staticMethod" }), {
+    name: "Test2 static method only",
+  });
+
+  assertEquals(getOwnMetadata("instanceField", TestClass1, { static: false, name: "instanceField" }), {
+    name: "Test1 instance field",
+  });
+  assertEquals(getOwnMetadata("instanceField", TestClass2, { static: false, name: "instanceField" }), {
+    name: "Test1 instance field",
+    extended: true,
+  });
+
+  assertEquals(getOwnMetadata("instanceField1", TestClass1, { static: false, name: "instanceField" }), {
+    name: "Test1 instance field only",
+  });
+  assertEquals(getOwnMetadata("instanceField1", TestClass2, { static: false, name: "instanceField" }), undefined);
+
+  assertEquals(getOwnMetadata("instanceField2", TestClass1, { static: false, name: "instanceField" }), undefined);
+  assertEquals(getOwnMetadata("instanceField2", TestClass2, { static: false, name: "instanceField" }), {
+    name: "Test2 instance field only",
+  });
+
+  assertEquals(getOwnMetadata("instanceMethod", TestClass1, { static: false, name: "instanceMethod" }), {
+    name: "Test1 instance method",
+  });
+  assertEquals(getOwnMetadata("instanceMethod", TestClass2, { static: false, name: "instanceMethod" }), {
+    name: "Test1 instance method",
+    extended: true,
+  });
+
+  assertEquals(getOwnMetadata("instanceMethod1", TestClass1, { static: false, name: "instanceMethod" }), {
+    name: "Test1 instance method only",
+  });
+  assertEquals(getOwnMetadata("instanceMethod1", TestClass2, { static: false, name: "instanceMethod" }), undefined);
+
+  assertEquals(getOwnMetadata("instanceMethod2", TestClass1, { static: false, name: "instanceMethod" }), undefined);
+  assertEquals(getOwnMetadata("instanceMethod2", TestClass2, { static: false, name: "instanceMethod" }), {
     name: "Test2 instance method only",
   });
 });
