@@ -57,9 +57,10 @@ class MyClass {
 This library provides a metadata API inspired by `reflect-metadata`, but adapted for the modern decorator context
 structure.
 
-The functions `getMetadata`, `hasMetadata`, and `getMetadataKeys` follow the usage pattern of `reflect-metadata`.
-However, when specifying a property, they expect an object structure `{ name: string | symbol, static: boolean }` which
-aligns with the `context` object in the TC39 decorator proposal.
+The functions `getMetadata`, `hasMetadata`, `getMetadataKeys`, `getOwnMetadata`, `hasOwnMetadata`, and
+`getOwnMetadataKeys` follow the usage pattern of `reflect-metadata`. However, when specifying a property, they expect an
+object structure `{ name: string | symbol, static: boolean }` which aligns with the `context` object in the TC39
+decorator proposal.
 
 ```typescript
 import { defineMetadataDecorator, getMetadata } from "@denostack/universal-decorator";
@@ -94,7 +95,7 @@ meaning metadata defined on a parent class is accessible to child classes unless
 You can also inherit and extend existing metadata values using a callback function: `(previousValue) => newValue`.
 
 ```typescript
-import { defineMetadataDecorator, getMetadata } from "@denostack/universal-decorator";
+import { defineMetadataDecorator, getMetadata, getOwnMetadata, hasOwnMetadata } from "@denostack/universal-decorator";
 
 // 1. Simple Definition
 @defineMetadataDecorator("custom:tag", "v1")
@@ -107,6 +108,18 @@ class Child extends Parent {}
 
 console.log(getMetadata("custom:tag", Parent)); // "v1"
 console.log(getMetadata("custom:tag", Child)); // "v1 -> v2"
+
+// You can use `hasOwnMetadata` and `getOwnMetadata` to check for metadata directly defined
+// on a class, rather than inherited metadata.
+@defineMetadataDecorator("custom:attr", "only-child")
+class GrandChild extends Child {}
+
+console.log(getOwnMetadata("custom:tag", Parent)); // "v1"
+console.log(getOwnMetadata("custom:tag", Child)); // "v1 -> v2"
+console.log(getOwnMetadata("custom:tag", GrandChild)); // undefined (not directly defined on GrandChild)
+
+console.log(hasOwnMetadata("custom:attr", GrandChild)); // true
+console.log(getOwnMetadata("custom:attr", GrandChild)); // "only-child"
 ```
 
 This inheritance mechanism follows the behavior specified in the Decorator Metadata proposal, ensuring that metadata
@@ -120,8 +133,8 @@ While `reflect-metadata` uses `(metadataKey, target, propertyKey)`:
 - **universal-decorator**: `getMetadata("key", Target, { name: "methodName", static: false })`
 
 This library consciously adopts the `{ name, static }` structure to be forwards-compatible with the context object
-provided by standard decorators. Unlike `reflect-metadata`, `getOwnMetadata` is not strictly separated; instead,
-metadata resolution follows the prototype chain (inheritance) by default, as per the proposal.
+provided by standard decorators. Metadata resolution follows the prototype chain (inheritance) by default, as per the
+proposal, but you can also access own metadata using `getOwnMetadata`.
 
 ## References
 

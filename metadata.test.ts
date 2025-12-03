@@ -146,7 +146,7 @@ Deno.test("defineMetadataDecorator, inherit with typescript experimental decorat
     override instanceMethod() {}
   }
 
-  defineMetadataDecorator("class", (value) => ({ ...(value as Record<string, string>), extended: true }))(TestClass2);
+  defineMetadataDecorator("class", (parent) => ({ parent, name: "TestClass2", extended: true }))(TestClass2);
   defineMetadataDecorator("class2", { name: "TestClass2 only" })(TestClass2);
   defineMetadataDecorator("staticField", (value) => ({ ...(value as Record<string, string>), extended: true }))(
     TestClass2,
@@ -264,7 +264,11 @@ Deno.test("defineMetadataDecorator, inherit with typescript experimental decorat
 
   // getMetadata
   assertEquals(getMetadata("class", TestClass1), { name: "TestClass1" });
-  assertEquals(getMetadata("class", TestClass2), { name: "TestClass1", extended: true });
+  assertEquals(getMetadata("class", TestClass2), {
+    parent: { name: "TestClass1" },
+    name: "TestClass2",
+    extended: true,
+  });
 
   assertEquals(getMetadata("class1", TestClass1), { name: "TestClass1 only" });
   assertEquals(getMetadata("class1", TestClass2), { name: "TestClass1 only" }); // inherit
@@ -354,8 +358,11 @@ Deno.test("defineMetadataDecorator, inherit with typescript experimental decorat
 
   // getOwnMetadata
   assertEquals(getOwnMetadata("class", TestClass1), { name: "TestClass1" });
-  assertEquals(getOwnMetadata("class", TestClass2), { name: "TestClass1", extended: true });
-
+  assertEquals(getOwnMetadata("class", TestClass2), {
+    parent: { name: "TestClass1" },
+    name: "TestClass2",
+    extended: true,
+  });
   assertEquals(getOwnMetadata("class1", TestClass1), { name: "TestClass1 only" });
   assertEquals(getOwnMetadata("class1", TestClass2), undefined);
 
@@ -453,7 +460,7 @@ Deno.test("defineMetadataDecorator, inherit with ecma decorator", () => {
     instanceMethod() {}
   }
 
-  @defineMetadataDecorator("class", (value) => ({ ...(value as Record<string, string>), extended: true }))
+  @defineMetadataDecorator("class", (parent) => ({ parent, name: "TestClass2", extended: true }))
   @defineMetadataDecorator("class2", { name: "TestClass2 only" })
   class TestClass2 extends TestClass1 {
     @defineMetadataDecorator("staticField", (value) => ({ ...(value as Record<string, string>), extended: true }))
@@ -559,7 +566,11 @@ Deno.test("defineMetadataDecorator, inherit with ecma decorator", () => {
 
   // getMetadata
   assertEquals(getMetadata("class", TestClass1), { name: "TestClass1" });
-  assertEquals(getMetadata("class", TestClass2), { name: "TestClass1", extended: true });
+  assertEquals(getMetadata("class", TestClass2), {
+    parent: { name: "TestClass1" },
+    name: "TestClass2",
+    extended: true,
+  });
 
   assertEquals(getMetadata("class1", TestClass1), { name: "TestClass1 only" });
   assertEquals(getMetadata("class1", TestClass2), { name: "TestClass1 only" }); // inherit
@@ -649,8 +660,11 @@ Deno.test("defineMetadataDecorator, inherit with ecma decorator", () => {
 
   // getOwnMetadata
   assertEquals(getOwnMetadata("class", TestClass1), { name: "TestClass1" });
-  assertEquals(getOwnMetadata("class", TestClass2), { name: "TestClass1", extended: true });
-
+  assertEquals(getOwnMetadata("class", TestClass2), {
+    parent: { name: "TestClass1" },
+    name: "TestClass2",
+    extended: true,
+  });
   assertEquals(getOwnMetadata("class1", TestClass1), { name: "TestClass1 only" });
   assertEquals(getOwnMetadata("class1", TestClass2), undefined);
 
